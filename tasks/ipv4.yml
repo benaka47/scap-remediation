@@ -1,0 +1,276 @@
+
+- name: XCCDF Value sysctl_net_ipv4_icmp_ignore_bogus_error_responses_value # promote to variable
+  set_fact:
+    sysctl_net_ipv4_icmp_ignore_bogus_error_responses_value: !!str |-
+        1
+  tags:
+    - always
+
+- name: Ensure sysctl net.ipv4.icmp_ignore_bogus_error_responses is set
+  sysctl:
+    name: net.ipv4.icmp_ignore_bogus_error_responses
+    value: "{{ sysctl_net_ipv4_icmp_ignore_bogus_error_responses_value }}"
+    state: present
+    reload: yes
+  tags:
+    - sysctl_net_ipv4_icmp_ignore_bogus_error_responses
+    - unknown_severity
+    - disable_strategy
+    - low_complexity
+    - medium_disruption
+    - CCE-80166-2
+    - NIST-800-53-CM-7
+    - NIST-800-53-SC-5
+    - NIST-800-171-3.1.20
+
+- name: XCCDF Value sysctl_net_ipv4_conf_default_log_martians_value # promote to variable
+  set_fact:
+    sysctl_net_ipv4_conf_default_log_martians_value: !!str |-
+        1
+  tags:
+    - always
+
+- name: Ensure sysctl net.ipv4.conf.default.log_martians is set
+  sysctl:
+    name: net.ipv4.conf.default.log_martians
+    value: "{{ sysctl_net_ipv4_conf_default_log_martians_value }}"
+    state: present
+    reload: yes
+  tags:
+    - sysctl_net_ipv4_conf_default_log_martians
+    - unknown_severity
+    - disable_strategy
+    - low_complexity
+    - medium_disruption
+    - CCE-80161-3
+    - NIST-800-53-AC-17(7)
+    - NIST-800-53-CM-7
+    - NIST-800-53-SC-5(3)
+    - NIST-800-171-3.1.20
+
+- name: XCCDF Value sysctl_net_ipv4_conf_all_secure_redirects_value # promote to variable
+  set_fact:
+    sysctl_net_ipv4_conf_all_secure_redirects_value: !!str |-
+        0
+  tags:
+    - always
+
+- name: Ensure sysctl net.ipv4.conf.all.secure_redirects is set
+  sysctl:
+    name: net.ipv4.conf.all.secure_redirects
+    value: "{{ sysctl_net_ipv4_conf_all_secure_redirects_value }}"
+    state: present
+    reload: yes
+  tags:
+    - sysctl_net_ipv4_conf_all_secure_redirects
+    - medium_severity
+    - disable_strategy
+    - low_complexity
+    - medium_disruption
+    - CCE-80159-7
+    - NIST-800-53-AC-4
+    - NIST-800-53-CM-7
+    - NIST-800-53-SC-5
+    - NIST-800-171-3.1.20
+
+- name: XCCDF Value sysctl_net_ipv4_conf_default_secure_redirects_value # promote to variable
+  set_fact:
+    sysctl_net_ipv4_conf_default_secure_redirects_value: !!str |-
+        0
+  tags:
+    - always
+
+- name: Ensure sysctl net.ipv4.conf.default.secure_redirects is set
+  sysctl:
+    name: net.ipv4.conf.default.secure_redirects
+    value: "{{ sysctl_net_ipv4_conf_default_secure_redirects_value }}"
+    state: present
+    reload: yes
+  tags:
+    - sysctl_net_ipv4_conf_default_secure_redirects
+    - medium_severity
+    - disable_strategy
+    - low_complexity
+    - medium_disruption
+    - CCE-80164-7
+    - NIST-800-53-AC-4
+    - NIST-800-53-CM-7
+    - NIST-800-53-SC-5
+    - NIST-800-53-SC-7
+    - NIST-800-171-3.1.20
+
+- name: XCCDF Value sysctl_net_ipv4_tcp_syncookies_value # promote to variable
+  set_fact:
+    sysctl_net_ipv4_tcp_syncookies_value: !!str |-
+        1
+  tags:
+    - always
+
+- name: Ensure sysctl net.ipv4.tcp_syncookies is set
+  sysctl:
+    name: net.ipv4.tcp_syncookies
+    value: "{{ sysctl_net_ipv4_tcp_syncookies_value }}"
+    state: present
+    reload: yes
+  tags:
+    - sysctl_net_ipv4_tcp_syncookies
+    - medium_severity
+    - disable_strategy
+    - low_complexity
+    - medium_disruption
+    - CCE-27495-1
+    - NIST-800-53-AC-4
+    - NIST-800-53-SC-5(1)(2)
+    - NIST-800-53-SC-5(2)
+    - NIST-800-53-SC-5(3)
+    - NIST-800-171-3.1.20
+    - CJIS-5.10.1.1
+
+- name: XCCDF Value sysctl_net_ipv4_icmp_echo_ignore_broadcasts_value # promote to variable
+  set_fact:
+    sysctl_net_ipv4_icmp_echo_ignore_broadcasts_value: !!str |-
+        1
+  tags:
+    - always
+
+- name: Ensure sysctl net.ipv4.icmp_echo_ignore_broadcasts is set
+  sysctl:
+    name: net.ipv4.icmp_echo_ignore_broadcasts
+    value: "{{ sysctl_net_ipv4_icmp_echo_ignore_broadcasts_value }}"
+    state: present
+    reload: yes
+  tags:
+    - sysctl_net_ipv4_icmp_echo_ignore_broadcasts
+    - medium_severity
+    - disable_strategy
+    - low_complexity
+    - medium_disruption
+    - CCE-80165-4
+    - NIST-800-53-AC-4
+    - NIST-800-53-CM-7
+    - NIST-800-53-SC-5
+    - NIST-800-171-3.1.20
+    - CJIS-5.10.1.1
+    - DISA-STIG-RHEL-07-040630
+
+- name: XCCDF Value sysctl_net_ipv4_conf_all_accept_redirects_value # promote to variable
+  set_fact:
+    sysctl_net_ipv4_conf_all_accept_redirects_value: !!str |-
+        0
+  tags:
+    - always
+
+- name: Ensure sysctl net.ipv4.conf.all.accept_redirects is set
+  sysctl:
+    name: net.ipv4.conf.all.accept_redirects
+    value: "{{ sysctl_net_ipv4_conf_all_accept_redirects_value }}"
+    state: present
+    reload: yes
+  tags:
+    - sysctl_net_ipv4_conf_all_accept_redirects
+    - medium_severity
+    - disable_strategy
+    - low_complexity
+    - medium_disruption
+    - CCE-80158-9
+    - NIST-800-53-CM-6(d)
+    - NIST-800-53-CM-7
+    - NIST-800-53-SC-5
+    - NIST-800-171-3.1.20
+    - CJIS-5.10.1.1
+    - DISA-STIG-RHEL-07-040641
+
+- name: XCCDF Value sysctl_net_ipv4_conf_all_log_martians_value # promote to variable
+  set_fact:
+    sysctl_net_ipv4_conf_all_log_martians_value: !!str |-
+        1
+  tags:
+    - always
+
+- name: Ensure sysctl net.ipv4.conf.all.log_martians is set
+  sysctl:
+    name: net.ipv4.conf.all.log_martians
+    value: "{{ sysctl_net_ipv4_conf_all_log_martians_value }}"
+    state: present
+    reload: yes
+  tags:
+    - sysctl_net_ipv4_conf_all_log_martians
+    - unknown_severity
+    - disable_strategy
+    - low_complexity
+    - medium_disruption
+    - CCE-80160-5
+    - NIST-800-53-AC-17(7)
+    - NIST-800-53-CM-7
+    - NIST-800-53-SC-5(3)
+    - NIST-800-171-3.1.20
+
+- name: XCCDF Value sysctl_net_ipv4_conf_default_accept_redirects_value # promote to variable
+  set_fact:
+    sysctl_net_ipv4_conf_default_accept_redirects_value: !!str |-
+        0
+  tags:
+    - always
+
+- name: Ensure sysctl net.ipv4.conf.default.accept_redirects is set
+  sysctl:
+    name: net.ipv4.conf.default.accept_redirects
+    value: "{{ sysctl_net_ipv4_conf_default_accept_redirects_value }}"
+    state: present
+    reload: yes
+  tags:
+    - sysctl_net_ipv4_conf_default_accept_redirects
+    - medium_severity
+    - disable_strategy
+    - low_complexity
+    - medium_disruption
+    - CCE-80163-9
+    - NIST-800-53-AC-4
+    - NIST-800-53-CM-7
+    - NIST-800-53-SC-5
+    - NIST-800-53-SC-7
+    - NIST-800-171-3.1.20
+    - CJIS-5.10.1.1
+    - DISA-STIG-RHEL-07-040640
+
+#### Network Parameters for Hosts Only
+- name: Ensure sysctl net.ipv4.conf.all.send_redirects is set to 0
+  sysctl:
+    name: net.ipv4.conf.all.send_redirects
+    value: 0
+    state: present
+    reload: yes
+  tags:
+    - sysctl_net_ipv4_conf_all_send_redirects
+    - medium_severity
+    - disable_strategy
+    - low_complexity
+    - medium_disruption
+    - CCE-80156-3
+    - NIST-800-53-AC-4
+    - NIST-800-53-CM-7
+    - NIST-800-53-SC-5(1)
+    - NIST-800-171-3.1.20
+    - CJIS-5.10.1.1
+    - DISA-STIG-RHEL-07-040660
+
+- name: Ensure sysctl net.ipv4.conf.default.send_redirects is set to 0
+  sysctl:
+    name: net.ipv4.conf.default.send_redirects
+    value: 0
+    state: present
+    reload: yes
+  tags:
+    - sysctl_net_ipv4_conf_default_send_redirects
+    - medium_severity
+    - disable_strategy
+    - low_complexity
+    - medium_disruption
+    - CCE-80156-3
+    - NIST-800-53-AC-4
+    - NIST-800-53-CM-7
+    - NIST-800-53-SC-5
+    - NIST-800-53-SC-7
+    - NIST-800-171-3.1.20
+    - CJIS-5.10.1.1
+    - DISA-STIG-RHEL-07-040650

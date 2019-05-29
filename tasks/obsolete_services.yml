@@ -1,0 +1,80 @@
+
+#
+#### Rlogin, Rsh, and Rexec
+
+- name: Disable service rhnsd
+  service:
+    name: "{{item}}"
+    enabled: "no"
+    state: "stopped"
+  register: service_result
+  failed_when: "service_result is failed and ('Could not find the requested service' not in service_result.msg)"
+  with_items:
+    - rhnsd
+  tags:
+    - service_rhnsd_disabled
+    - unknown_severity
+    - disable_strategy
+    - low_complexity
+    - low_disruption
+    - CCE-80269-4
+    - NIST-800-53-AC-17(8)
+    - NIST-800-53-CM-7
+
+
+- name: Disable socket of service rhnsd if applicable
+  service:
+    name: "{{item}}"
+    enabled: "no"
+    state: "stopped"
+  register: socket_result
+  failed_when: "socket_result is failed and ('Could not find the requested service' not in socket_result.msg)"
+  with_items:
+    - rhnsd.socket
+  tags:
+    - service_rhnsd_disabled
+    - unknown_severity
+    - disable_strategy
+    - low_complexity
+    - low_disruption
+    - CCE-80269-4
+    - NIST-800-53-AC-17(8)
+    - NIST-800-53-CM-7
+
+
+- name: Disable service mdmonitor
+  service:
+    name: "{{item}}"
+    enabled: "no"
+    state: "stopped"
+  register: service_result
+  failed_when: "service_result is failed and ('Could not find the requested service' not in service_result.msg)"
+  with_items:
+    - mdmonitor
+  tags:
+    - service_mdmonitor_disabled
+    - unknown_severity
+    - disable_strategy
+    - low_complexity
+    - low_disruption
+    - CCE-80259-5
+    - NIST-800-53-CM-7
+
+
+- name: Disable socket of service mdmonitor if applicable
+  service:
+    name: "{{item}}"
+    enabled: "no"
+    state: "stopped"
+  register: socket_result
+  failed_when: "socket_result is failed and ('Could not find the requested service' not in socket_result.msg)"
+  with_items:
+    - mdmonitor.socket
+  tags:
+    - service_mdmonitor_disabled
+    - unknown_severity
+    - disable_strategy
+    - low_complexity
+    - low_disruption
+    - CCE-80259-5
+    - NIST-800-53-CM-7

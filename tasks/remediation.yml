@@ -1,0 +1,399 @@
+# Guide to the Secure Configuration of Red Hat Enterprise Linux 7
+## services
+- name: Obsolete services
+  include: obsolete_services.yml
+### SSH service
+
+
+- name: Configure OpenSSH Server if Necessary
+  include: sshd.yml
+
+
+## System Settings
+- name: Installing and Maintaining Software
+  include: aide.yml
+
+### Configure Syslog
+#### Ensure All logs are Rotated
+- name: "[CUSTOM] Ensure Logrotate Runs Periodically"
+  lineinfile:
+    create: yes
+    dest: /etc/logrotate.conf
+    regexp: ^daily
+    line: daily
+  tags:
+    - lograotate_set_daily
+
+### Network Configuration and Firewalls
+- name: Configure IPV6
+  include: ipv6.yml
+
+- name: Network Related Kernel Runtime Parameters for Hosts and Routers
+  include: ipv4.yml
+
+#### Uncommon Network Protocols
+- name: Ensure kernel module 'dccp' is disabled
+  lineinfile:
+    create: yes
+    dest: "/etc/modprobe.d/{{item}}.conf"
+    regexp: '{{item}}'
+    line: "install {{item}} /bin/true"
+  with_items:
+    - dccp
+  tags:
+    - kernel_module_dccp_disabled
+    - medium_severity
+    - disable_strategy
+    - low_complexity
+    - medium_disFor example use case #1, you should use this kind of `inventory` :ruption
+    - CCE-26828-4
+    - NIST-800-53-CM-7
+    - NIST-800-171-3.4.6
+    - CJIS-5.10.1
+    - DISA-STIG-RHEL-07-020101
+
+- name: Ensure kernel module 'sctp' is disabled
+  lineinfile:
+    create: yes
+    dest: "/etc/modprobe.d/{{item}}.conf"
+    regexp: '{{item}}'
+    line: "install {{item}} /bin/true"
+  with_items:
+    - sctp
+  tags:
+    - kernel_module_sctp_disabled
+    - medium_severity
+    - disable_strategy
+    - low_complexity
+    - medium_disruption
+    - CCE-27106-4
+    - NIST-800-53-CM-7
+    - NIST-800-171-3.4.6
+    - CJIS-5.10.1
+
+### Set Boot Loader Password
+### Account and Access Control
+#### Secure Session Configuration Files for Login Accounts
+##### Ensure that Users Have Sensible Umask Values
+- name: "Ensure the Default Bash Umask is Set Correctly"
+  replace:
+    dest: /etc/bashrc
+    regexp: 'umask(\s+.*)'
+    replace: "umask 027"
+    mode: 0644
+  tags:
+    - set_umask_etc_bashrc
+    - custom_remediation
+
+- name: "[CUSTOM] Ensure the Default Umask is Set Correctly in /etc/profile"
+  replace:
+    dest: /etc/profile
+    regexp: 'umask(\s+.*)'
+    replace: "umask 027"
+    mode: 0644
+  tags:
+    - set_umask_etc_profile
+    - custom_remediation
+
+##### Modify the system Login Banner
+- name: "[CUSTOM] Modify the System Login Banner"
+  blockinfile:
+    dest: /etc/issue
+    block: |
+          -- WARNING -- This system is for the use of authorized users only. Individuals using this computer system without authority or in excess of their authority are subject to having all their activities on this system monitored and recorded by system personnel.Anyone using this system expressly consents to such monitoring and is advised that if such monitoring reveals possible evidence of criminal activity system personal may provide the evidence of such monitoring to law enforcement officials.
+  tags:
+    - correct_banner_etc_issue
+    - custom_remediation
+
+- name: Protect Accounts by Restrticting Password-Based Login
+  include: password_auth.yml
+### System Accounting with auditd
+
+- name: Configure <tt>auditd</tt> Rules for Comprehensive Auditing
+  include: auditd.yml
+### File Permissions and Masks
+#### Verify Permissions on Important Files and Directories
+##### Verify Permissions on Files with Local Account Information and Credentials Check with OPENSHIFT
+#### Restrict Programs from Dangerous Execution Patterns
+##### Disable core dumps
+- name: Ensure sysctl fs.suid_dumpable is set to 0
+  sysctl:
+    name: fs.suid_dumpable
+    value: 0
+    state: present
+    reload: yes
+  tags:
+    - sysctl_fs_suid_dumpable
+    - unknown_severity
+    - disable_strategy
+    - low_complexity
+    - medium_disruption
+    - CCE-26900-1
+    - NIST-800-53-SI-11
+
+##### Enable ExecShield
+
+- name: Ensure sysctl kernel.randomize_va_space is set to 2
+  sysctl:
+    name: kernel.randomize_va_space
+    value: 2
+    state: present
+    reload: yes
+  tags:
+    - sysctl_kernel_randomize_va_space
+    - medium_severity
+    - disable_strategy
+    - low_complexity
+    - medium_disruption
+    - CCE-27127-0
+    - NIST-800-53-SC-30(2)
+    - NIST-800-171-3.1.7
+    - DISA-STIG-RHEL-07-040201
+
+#### Restrict Partition Mount Options
+- name: Restrict Dynamic Mounting and Unmounting of Filesystems
+  include: automount.yml
+
+#### Disable KDump Kernel Crash Analyzer (kdump)
+- name: Disable service kdump
+  service:
+    name: "{{item}}"
+    enabled: "no"
+    state: "stopped"
+  register: service_result
+  failed_when: "service_result is failed and ('Could not find the requested service' not in service_result.msg)"
+  with_items:
+    - kdump
+  tags:
+    - service_kdump_disabled
+    - medium_severity
+    - disable_strategy
+    - low_complexity
+    - low_disruption
+    - CCE-80258-7
+    - NIST-800-53-AC-17(8)
+    - NIST-800-53-CM-7
+    - NIST-800-53-CM-6(b)
+    - DISA-STIG-RHEL-07-021300
+
+
+- name: Disable socket of service kdump if applicable
+  service:
+    name: "{{item}}"
+    enabled: "no"
+    state: "stopped"
+  register: socket_result
+  failed_when: "socket_result is failed and ('Could not find the requested service' not in socket_result.msg)"
+  with_items:
+    - kdump.socket
+  tags:
+    - service_kdump_disabled
+    - medium_severity
+    - disable_strategy
+    - low_complexity
+    - low_disruption
+    - CCE-80258-7
+    - NIST-800-53-AC-17(8)
+    - NIST-800-53-CM-7
+    - NIST-800-53-CM-6(b)
+    - DISA-STIG-RHEL-07-021300
+
+#- name: "Read list of files with incorrect permissions"
+#  shell: "rpm -Va | grep '^.M' | cut -d ' ' -f5- | sed -r 's;^.*\\s+(.+);\\1;g'"
+#  register: files_with_incorrect_permissions
+#  failed_when: False
+#  changed_when: False
+#  check_mode: no
+#  tags:
+#    - rpm_verify_permissions
+#    - high_severity
+#    - restrict_strategy
+#    - high_complexity
+#    - medium_disruption
+#    - CCE-27209-6
+#    - NIST-800-53-AC-6
+#    - NIST-800-53-AU-9(1)
+#    - NIST-800-53-AU-9(3)
+#    - NIST-800-53-CM-6(d)
+#    - NIST-800-53-CM-6(3)
+#    - NIST-800-171-3.3.8
+#    - NIST-800-171-3.4.1
+#    - PCI-DSS-Req-11.5
+#    - CJIS-5.10.4.1
+#    - DISA-STIG-RHEL-07-010010
+
+#- name: "Correct file permissions with RPM"
+#  shell: "rpm --quiet --setperms $(rpm -qf {{ item }})"
+#  with_items: "{{ files_with_incorrect_permissions.stdout_lines }}"
+#  when: files_with_incorrect_permissions.stdout_lines | length > 0
+#  tags:
+#   - rpm_verify_permissions
+#    - high_severity
+#    - restrict_strategy
+#    - high_complexity
+#    - medium_disruption
+#    - CCE-27209-6
+#    - NIST-800-53-AC-6
+#    - NIST-800-53-AU-9(1)
+#    - NIST-800-53-AU-9(3)
+#    - NIST-800-53-CM-6(d)
+#    - NIST-800-53-CM-6(3)
+#    - NIST-800-171-3.3.8
+#    - NIST-800-171-3.4.1
+#    - PCI-DSS-Req-11.5
+#    - CJIS-5.10.4.1
+#    - DISA-STIG-RHEL-07-010010
+
+
+
+#
+#- name: Find All Yum Repositories
+#  find:
+#    paths: "/etc/yum.repos.d/"
+#    patterns: "*.repo"
+#  register: yum_find
+#
+#- name: Ensure gpgcheck Enabled For All Yum Package Repositories
+#  with_items: "{{ yum_find.files }}"
+#  lineinfile:
+#    create: yes
+#    dest: "{{ item.path }}"
+#    regexp: '^gpgcheck'
+#    line: 'gpgcheck=1'
+#  tags:
+#    - ensure_gpgcheck_never_disabled
+#    - high_severity
+#    - unknown_strategy
+#    - low_complexity
+#    - medium_disruption
+#    - CCE-26876-3
+#    - NIST-800-53-CM-5(3)
+#    - NIST-800-53-SI-7
+#    - NIST-800-53-MA-1(b)
+#    - NIST-800-171-3.4.8
+#    - PCI-DSS-Req-6.2
+#    - CJIS-5.10.4.1
+
+
+
+- name: "Ensure YUM Removes Previous Package Versions"
+  lineinfile:
+      dest: /etc/yum.conf
+      regexp: ^#?clean_requirements_on_remove
+      line: clean_requirements_on_remove=1
+      insertafter: '\[main\]'
+  tags:
+    - clean_components_post_updating
+    - low_severity
+    - restrict_strategy
+    - low_complexity
+    - low_disruption
+    - CCE-80346-0
+    - NIST-800-53-SI-2(6)
+    - NIST-800-171-3.4.8
+    - DISA-STIG-RHEL-07-020200
+
+
+- name: Check existence of yum on Fedora
+  stat:
+    path: /etc/yum.conf
+  register: yum_config_file
+  check_mode: no
+  when: ansible_distribution == "Fedora"
+
+# Old versions of Fedora use yum
+
+- name: Ensure GPG check Enabled for Local Packages (Yum)
+  ini_file:
+    dest: "{{item}}"
+    section: main
+    option: localpkg_gpgcheck
+    value: 1
+    create: True
+  with_items: "/etc/yum.conf"
+  when: ansible_distribution == "RedHat" or ansible_distribution == "CentOS" or yum_config_file.stat.exists
+  tags:
+    - ensure_gpgcheck_local_packages
+    - high_severity
+    - unknown_strategy
+    - low_complexity
+    - medium_disruption
+    - CCE-80347-8
+    - NIST-800-53-CM-5(3)
+    - NIST-800-171-3.4.8
+    - DISA-STIG-RHEL-07-020060
+
+- name: Ensure GPG check Enabled for Local Packages (DNF)
+  ini_file:
+    dest: "{{item}}"
+    section: main
+    option: localpkg_gpgcheck
+    value: 1
+    create: True
+  with_items: "/etc/dnf/dnf.conf"
+  when: ansible_distribution == "Fedora"
+  tags:
+    - ensure_gpgcheck_local_packages
+    - high_severity
+    - unknown_strategy
+    - low_complexity
+    - medium_disruption
+    - CCE-80347-8
+    - NIST-800-53-CM-5(3)
+    - NIST-800-171-3.4.8
+    - DISA-STIG-RHEL-07-020060
+
+
+- name: Ensure permission 600 on /boot/grub/grub.conf
+  file:
+    path: "{{ item }}"
+    mode: 600
+  with_items:
+    - /boot/grub/grub.conf
+  tags:
+    - file_permissions_grub_conf
+    - medium_severity
+    - configure_strategy
+    - low_complexity
+    - low_disruption
+    - NIST-800-53-AC-6(7)
+
+
+- name: "[CUSTOM] Correct file permissions with RPM"
+  shell: "systemctl mask ctrl-alt-del.target"
+  tags:
+    - custom_remediation
+
+
+
+- name: Ensure permission 0640 on /etc/httpd/conf.d/*
+  file:
+    path: "{{ item }}"
+    mode: 0640
+  with_items:
+    - /etc/httpd/conf.d/*
+  tags:
+    - file_permissions_httpd_server_conf_d_files
+    - unknown_severity
+    - configure_strategy
+    - low_complexity
+    - low_disruption
+    - CCE-80381-7
+    - NIST-800-53-CM-7
+  ignore_errors: yes
+
+- name: Ensure permission 0640 on /etc/httpd/conf/*
+  file:
+    path: "{{ item }}"
+    mode: 0640
+  with_items:
+    - /etc/httpd/conf/*
+  tags:
+    - file_permissions_httpd_server_conf_files
+    - unknown_severity
+    - configure_strategy
+    - low_complexity
+    - low_disruption
+    - CCE-80324-7
+    - NIST-800-53-CM-7
+  ignore_errors: yes

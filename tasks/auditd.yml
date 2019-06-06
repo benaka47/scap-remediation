@@ -469,6 +469,76 @@
     - DISA-STIG-RHEL-07-030340
 ##### Configure auditd admin_space_left Action on Low Disk Space ######
 
+
+##### Configure auditd space_left Action on Low Disk Space ######
+- name: XCCDF Value var_auditd_space_left_action # promote to variable
+  set_fact:
+    var_auditd_space_left_action: !!str |-
+        email
+  tags:
+    - always
+
+- name: Configure auditd space_left Action on Low Disk Space
+  lineinfile:
+    dest: /etc/audit/auditd.conf
+    line: "space_left_action = {{ var_auditd_space_left_action }}"
+    regexp: ^space_left_action*
+  #notify: reload auditd
+  tags:
+    - auditd_data_retention_space_left_action
+    - medium_severity
+    - restrict_strategy
+    - low_complexity
+    - low_disruption
+    - CCE-27375-5
+    - NIST-800-53-AU-1(b)
+    - NIST-800-53-AU-4
+    - NIST-800-53-AU-5(1)
+    - NIST-800-53-AU-5(b)
+    - NIST-800-53-IR-5
+    - NIST-800-171-3.3.1
+    - PCI-DSS-Req-10.7
+    - CJIS-5.4.1.1
+##### Configure auditd space_left Action on Low Disk Space ######
+
+
+
+##### Configure auditd space_left on Low Disk Space ######
+- name: [CUSTOM] XCCDF Value var_auditd_space_left # promote to variable
+  set_fact:
+    var_auditd_space_left: 100
+  tags:
+    - always
+
+- name: [CUSTOM] Configure auditd var_auditd_space_left Action on Low Disk Space
+  lineinfile:
+    dest: /etc/audit/auditd.conf
+    line: "space_left = {{ var_auditd_space_left }}"
+    regexp: "^space_left*"
+  notify: reload auditd
+  tags:
+    - custom_remediation
+##### Configure auditd space_left on Low Disk Space ######
+
+
+##### Configure auditd space_left on Low Disk Space ######
+- name: [CUSTOM] XCCDF Value var_auditd_disk_full_action # promote to variable
+  set_fact:
+    var_auditd_disk_full_action: !!str |-
+      single
+  tags:
+    - always
+
+- name: [CUSTOM] Configure auditd Disk Full Action when Disk Space Is Full
+  lineinfile:
+    dest: /etc/audit/auditd.conf
+    line: "disk_full_action = {{ var_auditd_disk_full_action }}"
+    regexp: "^disk_full_action*"
+  notify: reload auditd
+  tags:
+    - custom_remediation
+##### Configure auditd space_left on Low Disk Space ######
+
 #### Configure <tt>auditd</tt> Rules for Comprehensive Auditing
 - name: Enable service auditd
   service:
@@ -2104,6 +2174,257 @@
 
 
 
+###### Record Unsuccessul Delete Attempts to Files - unlinkat #########
+
+#
+# What architecture are we on?
+#
+- name: Set architecture for audit unlinkat tasks
+  set_fact:
+    audit_arch: "b{{ ansible_architecture | regex_replace('.*(\\d\\d$)','\\1') }}"
+
+#
+# Inserts/replaces the rule in /etc/audit/rules.d
+#
+- name: Search /etc/audit/rules.d for other DAC audit rules
+  find:
+    paths: "/etc/audit/rules.d"
+    recurse: no
+    contains: "-F key=perm_mod$"
+    patterns: "*.rules"
+  register: find_unlinkat
+
+- name: If existing DAC ruleset not found, use /etc/audit/rules.d/access.rules as the recipient for the rule
+  set_fact:
+    all_files:
+      - /etc/audit/rules.d/access.rules
+  when: find_unlinkat.matched == 0
+
+- name: Use matched file as the recipient for the rule
+  set_fact:
+    all_files:
+      - "{{ find_unlinkat.files | map(attribute='path') | list | first }}"
+  when: find_unlinkat.matched > 0
+
+- name: Inserts/replaces the unlinkat rule in rules.d when on x86
+  lineinfile:
+    path: "{{ all_files[0] }}"
+    line: "{{ item }}"
+    create: yes
+  with_items:
+    - "-a always,exit -F arch=b32 -S unlinkat -F exit=-EACCES -F auid>=1000 -F auid!=4294967295 -F key=access"
+    - "-a always,exit -F arch=b32 -S unlinkat -F exit=-EPERM -F auid>=1000 -F auid!=4294967295 -F key=access"
+  tags:
+    - audit_rules_unsuccessful_file_modification_unlinkat
+    - medium_severity
+    - restrict_strategy
+    - low_complexity
+    - low_disruption
+    - NIST-800-53-AC-17(7)
+    - NIST-800-53-AU-1(b)
+    - NIST-800-53-AU-2(a)
+    - NIST-800-53-AU-2(c)
+    - NIST-800-53-AU-2(d)
+    - NIST-800-53-AU-12(a)
+    - NIST-800-53-AU-12(c)
+    - NIST-800-53-IR-5
+    - NIST-800-171-3.1.7
+    - PCI-DSS-Req-10.2.4
+    - PCI-DSS-Req-10.2.1
+
+- name: Inserts/replaces the unlinkat rule in rules.d when on x86_64
+  lineinfile:
+    path: "{{ all_files[0] }}"
+    line: "{{ item }}"
+    create: yes
+  with_items:
+    - "-a always,exit -F arch=b64 -S unlinkat -F exit=-EACCES -F auid>=1000 -F auid!=4294967295 -F key=access"
+    - "-a always,exit -F arch=b64 -S unlinkat -F exit=-EPERM -F auid>=1000 -F auid!=4294967295 -F key=access"
+  when: audit_arch == 'b64'
+  tags:
+    - audit_rules_unsuccessful_file_modification_unlinkat
+    - medium_severity
+    - restrict_strategy
+    - low_complexity
+    - low_disruption
+    - NIST-800-53-AC-17(7)
+    - NIST-800-53-AU-1(b)
+    - NIST-800-53-AU-2(a)
+    - NIST-800-53-AU-2(c)
+    - NIST-800-53-AU-2(d)
+    - NIST-800-53-AU-12(a)
+    - NIST-800-53-AU-12(c)
+    - NIST-800-53-IR-5
+    - NIST-800-171-3.1.7
+    - PCI-DSS-Req-10.2.4
+    - PCI-DSS-Req-10.2.1
+#
+# Inserts/replaces the rule in /etc/audit/audit.rules
+#
+- name: Inserts/replaces the unlinkat rule in /etc/audit/audit.rules when on x86
+  lineinfile:
+    line: "{{ item }}"
+    state: present
+    dest: /etc/audit/audit.rules
+  with_items:
+    - "-a always,exit -F arch=b32 -S unlinkat -F exit=-EACCES -F auid>=1000 -F auid!=4294967295 -F key=access"
+    - "-a always,exit -F arch=b32 -S unlinkat -F exit=-EPERM -F auid>=1000 -F auid!=4294967295 -F key=access"
+  tags:
+    - audit_rules_unsuccessful_file_modification_unlinkat
+    - medium_severity
+    - restrict_strategy
+    - low_complexity
+    - low_disruption
+    - NIST-800-53-AC-17(7)
+    - NIST-800-53-AU-1(b)
+    - NIST-800-53-AU-2(a)
+    - NIST-800-53-AU-2(c)
+    - NIST-800-53-AU-2(d)
+    - NIST-800-53-AU-12(a)
+    - NIST-800-53-AU-12(c)
+    - NIST-800-53-IR-5
+    - NIST-800-171-3.1.7
+    - PCI-DSS-Req-10.2.4
+    - PCI-DSS-Req-10.2.1
+
+- name: Inserts/replaces the unlinkat rule in audit.rules when on x86_64
+  lineinfile:
+    line: "{{ item }}"
+    state: present
+    dest: /etc/audit/audit.rules
+    create: yes
+  with_items:
+    - "-a always,exit -F arch=b64 -S unlinkat -F exit=-EACCES -F auid>=1000 -F auid!=4294967295 -F key=access"
+    - "-a always,exit -F arch=b64 -S unlinkat -F exit=-EPERM -F auid>=1000 -F auid!=4294967295 -F key=access"
+  when: audit_arch == 'b64'
+  tags:
+    - audit_rules_unsuccessful_file_modification_unlinkat
+    - medium_severity
+    - restrict_strategy
+    - low_complexity
+    - low_disruption
+    - NIST-800-53-AC-17(7)
+    - NIST-800-53-AU-1(b)
+    - NIST-800-53-AU-2(a)
+    - NIST-800-53-AU-2(c)
+    - NIST-800-53-AU-2(d)
+    - NIST-800-53-AU-12(a)
+    - NIST-800-53-AU-12(c)
+    - NIST-800-53-IR-5
+    - NIST-800-171-3.1.7
+    - PCI-DSS-Req-10.2.4
+    - PCI-DSS-Req-10.2.1
+###### Record Unsuccessul Delete Attempts to Files - unlinkat #########
+
+
+
+
+
+
+
+###### Record Unsuccessul Permission Changes to Files - lremovexattr #########
+
+#
+# What architecture are we on?
+#
+- name: Set architecture for audit lremovexattr tasks
+  set_fact:
+    audit_arch: "b{{ ansible_architecture | regex_replace('.*(\\d\\d$)','\\1') }}"
+
+#
+# Inserts/replaces the rule in /etc/audit/rules.d
+#
+- name: Search /etc/audit/rules.d for other DAC audit rules
+  find:
+    paths: "/etc/audit/rules.d"
+    recurse: no
+    contains: "-F key=perm_mod$"
+    patterns: "*.rules"
+  register: find_lremovexattr
+
+- name: If existing DAC ruleset not found, use /etc/audit/rules.d/access.rules as the recipient for the rule
+  set_fact:
+    all_files:
+      - /etc/audit/rules.d/access.rules
+  when: find_lremovexattr.matched == 0
+
+- name: Use matched file as the recipient for the rule
+  set_fact:
+    all_files:
+      - "{{ find_lremovexattr.files | map(attribute='path') | list | first }}"
+  when: find_lremovexattr.matched > 0
+
+- name: Inserts/replaces the lremovexattr rule in rules.d when on x86
+  lineinfile:
+    path: "{{ all_files[0] }}"
+    line: "{{ item }}"
+    create: yes
+  with_items:
+    - "-a always,exit -F arch=b32 -S lremovexattr -F exit=-EACCES -F auid>=1000 -F auid!=4294967295 -F key=access"
+    - "-a always,exit -F arch=b32 -S lremovexattr -F exit=-EPERM -F auid>=1000 -F auid!=4294967295 -F key=access"
+  tags:
+    - audit_rules_unsuccessful_file_modification_lremovexattr
+    - medium_severity
+    - restrict_strategy
+    - low_complexity
+    - low_disruption
+
+- name: Inserts/replaces the lremovexattr rule in rules.d when on x86_64
+  lineinfile:
+    path: "{{ all_files[0] }}"
+    line: "{{ item }}"
+    create: yes
+  with_items:
+    - "-a always,exit -F arch=b64 -S lremovexattr -F exit=-EACCES -F auid>=1000 -F auid!=4294967295 -F key=access"
+    - "-a always,exit -F arch=b64 -S lremovexattr -F exit=-EPERM -F auid>=1000 -F auid!=4294967295 -F key=access"
+  when: audit_arch == 'b64'
+  tags:
+    - audit_rules_unsuccessful_file_modification_lremovexattr
+    - medium_severity
+    - restrict_strategy
+    - low_complexity
+    - low_disruption
+#
+# Inserts/replaces the rule in /etc/audit/audit.rules
+#
+- name: Inserts/replaces the lremovexattr rule in /etc/audit/audit.rules when on x86
+  lineinfile:
+    line: "{{ item }}"
+    state: present
+    dest: /etc/audit/audit.rules
+  with_items:
+    - "-a always,exit -F arch=b32 -S lremovexattr -F exit=-EACCES -F auid>=1000 -F auid!=4294967295 -F key=access"
+    - "-a always,exit -F arch=b32 -S lremovexattr -F exit=-EPERM -F auid>=1000 -F auid!=4294967295 -F key=access"
+  tags:
+    - audit_rules_unsuccessful_file_modification_lremovexattr
+    - medium_severity
+    - restrict_strategy
+    - low_complexity
+    - low_disruption
+
+- name: Inserts/replaces the lremovexattr rule in audit.rules when on x86_64
+  lineinfile:
+    line: "{{ item }}"
+    state: present
+    dest: /etc/audit/audit.rules
+    create: yes
+  with_items:
+    - "-a always,exit -F arch=b64 -S lremovexattr -F exit=-EACCES -F auid>=1000 -F auid!=4294967295 -F key=access"
+    - "-a always,exit -F arch=b64 -S lremovexattr -F exit=-EPERM -F auid>=1000 -F auid!=4294967295 -F key=access"
+  when: audit_arch == 'b64'
+  tags:
+    - audit_rules_unsuccessful_file_modification_lremovexattr
+    - medium_severity
+    - restrict_strategy
+    - low_complexity
+    - low_disruption
+
+
+###### Record Unsuccessul Permission Changes to Files - lremovexattr #########
+
+
+
+
 
 
 
@@ -2590,7 +2911,146 @@
 ###### Ensure auditd Collects File Deletion Events by User - unlinkat    #########
 
 
+###### Record Unsuccessul Delete Attempts to Files - rename    #########
+#
+# What architecture are we on?
+#
+- name: Set architecture for audit rename tasks
+  set_fact:
+    audit_arch: "b{{ ansible_architecture | regex_replace('.*(\\d\\d$)','\\1') }}"
 
+#
+# Inserts/replaces the rule in /etc/audit/rules.d
+#
+- name: Search /etc/audit/rules.d for other DAC audit rules
+  find:
+    paths: "/etc/audit/rules.d"
+    recurse: no
+    contains: "-F key=perm_mod$"
+    patterns: "*.rules"
+  register: find_rename
+
+- name: If existing DAC ruleset not found, use /etc/audit/rules.d/access.rules as the recipient for the rule
+  set_fact:
+    all_files:
+      - /etc/audit/rules.d/access.rules
+  when: find_rename.matched == 0
+
+- name: Use matched file as the recipient for the rule
+  set_fact:
+    all_files:
+      - "{{ find_rename.files | map(attribute='path') | list | first }}"
+  when: find_rename.matched > 0
+
+- name: Inserts/replaces the rename rule in rules.d when on x86
+  lineinfile:
+    path: "{{ all_files[0] }}"
+    line: "{{ item }}"
+    create: yes
+  with_items:
+    - "-a always,exit -F arch=b32 -S rename -F exit=-EACCES -F auid>=1000 -F auid!=4294967295 -F key=access"
+    - "-a always,exit -F arch=b32 -S rename -F exit=-EPERM -F auid>=1000 -F auid!=4294967295 -F key=access"
+  tags:
+    - audit_rules_unsuccessful_file_modification_rename
+    - medium_severity
+    - restrict_strategy
+    - low_complexity
+    - low_disruption
+    - NIST-800-53-AC-17(7)
+    - NIST-800-53-AU-1(b)
+    - NIST-800-53-AU-2(a)
+    - NIST-800-53-AU-2(c)
+    - NIST-800-53-AU-2(d)
+    - NIST-800-53-AU-12(a)
+    - NIST-800-53-AU-12(c)
+    - NIST-800-53-IR-5
+    - NIST-800-171-3.1.7
+    - PCI-DSS-Req-10.2.4
+    - PCI-DSS-Req-10.2.1
+
+- name: Inserts/replaces the rename rule in rules.d when on x86_64
+  lineinfile:
+    path: "{{ all_files[0] }}"
+    line: "{{ item }}"
+    create: yes
+  with_items:
+    - "-a always,exit -F arch=b64 -S rename -F exit=-EACCES -F auid>=1000 -F auid!=4294967295 -F key=access"
+    - "-a always,exit -F arch=b64 -S rename -F exit=-EPERM -F auid>=1000 -F auid!=4294967295 -F key=access"
+  when: audit_arch == 'b64'
+  tags:
+    - audit_rules_unsuccessful_file_modification_rename
+    - medium_severity
+    - restrict_strategy
+    - low_complexity
+    - low_disruption
+    - NIST-800-53-AC-17(7)
+    - NIST-800-53-AU-1(b)
+    - NIST-800-53-AU-2(a)
+    - NIST-800-53-AU-2(c)
+    - NIST-800-53-AU-2(d)
+    - NIST-800-53-AU-12(a)
+    - NIST-800-53-AU-12(c)
+    - NIST-800-53-IR-5
+    - NIST-800-171-3.1.7
+    - PCI-DSS-Req-10.2.4
+    - PCI-DSS-Req-10.2.1
+#
+# Inserts/replaces the rule in /etc/audit/audit.rules
+#
+- name: Inserts/replaces the rename rule in /etc/audit/audit.rules when on x86
+  lineinfile:
+    line: "{{ item }}"
+    state: present
+    dest: /etc/audit/audit.rules
+  with_items:
+    - "-a always,exit -F arch=b32 -S rename -F exit=-EACCES -F auid>=1000 -F auid!=4294967295 -F key=access"
+    - "-a always,exit -F arch=b32 -S rename -F exit=-EPERM -F auid>=1000 -F auid!=4294967295 -F key=access"
+  tags:
+    - audit_rules_unsuccessful_file_modification_rename
+    - medium_severity
+    - restrict_strategy
+    - low_complexity
+    - low_disruption
+    - NIST-800-53-AC-17(7)
+    - NIST-800-53-AU-1(b)
+    - NIST-800-53-AU-2(a)
+    - NIST-800-53-AU-2(c)
+    - NIST-800-53-AU-2(d)
+    - NIST-800-53-AU-12(a)
+    - NIST-800-53-AU-12(c)
+    - NIST-800-53-IR-5
+    - NIST-800-171-3.1.7
+    - PCI-DSS-Req-10.2.4
+    - PCI-DSS-Req-10.2.1
+
+- name: Inserts/replaces the rename rule in audit.rules when on x86_64
+  lineinfile:
+    line: "{{ item }}"
+    state: present
+    dest: /etc/audit/audit.rules
+    create: yes
+  with_items:
+    - "-a always,exit -F arch=b64 -S rename -F exit=-EACCES -F auid>=1000 -F auid!=4294967295 -F key=access"
+    - "-a always,exit -F arch=b64 -S rename -F exit=-EPERM -F auid>=1000 -F auid!=4294967295 -F key=access"
+  when: audit_arch == 'b64'
+  tags:
+    - audit_rules_unsuccessful_file_modification_rename
+    - medium_severity
+    - restrict_strategy
+    - low_complexity
+    - low_disruption
+    - NIST-800-53-AC-17(7)
+    - NIST-800-53-AU-1(b)
+    - NIST-800-53-AU-2(a)
+    - NIST-800-53-AU-2(c)
+    - NIST-800-53-AU-2(d)
+    - NIST-800-53-AU-12(a)
+    - NIST-800-53-AU-12(c)
+    - NIST-800-53-IR-5
+    - NIST-800-171-3.1.7
+    - PCI-DSS-Req-10.2.4
+    - PCI-DSS-Req-10.2.1
+###### Record Unsuccessul Delete Attempts to Files - rename    #########
 
 
 ###### Ensure auditd Collects File Deletion Events by User - rename    #########

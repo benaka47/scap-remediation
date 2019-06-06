@@ -504,13 +504,13 @@
 
 
 ##### Configure auditd space_left on Low Disk Space ######
-- name: [CUSTOM] XCCDF Value var_auditd_space_left promote to variable
+- name: "[CUSTOM] XCCDF Value var_auditd_space_left promote to variable"
   set_fact:
     var_auditd_space_left: "100"
   tags:
     - always
 
-- name: [CUSTOM] Configure auditd var_auditd_space_left Action on Low Disk Space
+- name: "[CUSTOM] Configure auditd var_auditd_space_left Action on Low Disk Space"
   lineinfile:
     dest: /etc/audit/auditd.conf
     line: "space_left = {{ var_auditd_space_left }}"
@@ -522,14 +522,14 @@
 
 
 ##### Configure auditd space_left on Low Disk Space ######
-- name: [CUSTOM] XCCDF Value var_auditd_disk_full_action promote to variable
+- name: "[CUSTOM] XCCDF Value var_auditd_disk_full_action promote to variable"
   set_fact:
     var_auditd_disk_full_action: !!str |-
       single
   tags:
     - always
 
-- name: [CUSTOM] Configure auditd Disk Full Action when Disk Space Is Full
+- name: "[CUSTOM] Configure auditd Disk Full Action when Disk Space Is Full"
   lineinfile:
     dest: /etc/audit/auditd.conf
     line: "disk_full_action = {{ var_auditd_disk_full_action }}"

@@ -504,9 +504,9 @@
 
 
 ##### Configure auditd space_left on Low Disk Space ######
-- name: [CUSTOM] XCCDF Value var_auditd_space_left # promote to variable
+- name: [CUSTOM] XCCDF Value var_auditd_space_left promote to variable
   set_fact:
-    var_auditd_space_left: 100
+    var_auditd_space_left: "100"
   tags:
     - always
 
@@ -522,7 +522,7 @@
 
 
 ##### Configure auditd space_left on Low Disk Space ######
-- name: [CUSTOM] XCCDF Value var_auditd_disk_full_action # promote to variable
+- name: [CUSTOM] XCCDF Value var_auditd_disk_full_action promote to variable
   set_fact:
     var_auditd_disk_full_action: !!str |-
       single
